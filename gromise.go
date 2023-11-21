@@ -25,7 +25,9 @@ func New(timeoutMs int) *Gromise {
 // 	return nil
 // }
 
-func (g *Gromise) AllSettled(fns []func() (interface{}, error)) *AllSettledResult {
+type Executor func() (interface{}, error)
+
+func (g *Gromise) AllSettled(fns []Executor) *AllSettledResult {
 	result := newAllSettledResult()
 
 	go func() {

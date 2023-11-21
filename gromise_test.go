@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewGromise(t *testing.T) {
-	fns := []func() (interface{}, error){
+	fns := []Executor{
 		func() (interface{}, error) {
 			time.Sleep(100 * time.Millisecond)
 			return 1, nil
@@ -59,7 +59,7 @@ func TestNewGromise(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	fns := []func() (interface{}, error){
+	fns := []Executor{
 		func() (interface{}, error) {
 			time.Sleep(100 * time.Millisecond)
 			return 1, nil
@@ -87,7 +87,7 @@ func TestError(t *testing.T) {
 }
 
 func TestPanic(t *testing.T) {
-	fns := []func() (interface{}, error){
+	fns := []Executor{
 		func() (interface{}, error) {
 			time.Sleep(100 * time.Millisecond)
 			return 1, nil
@@ -129,7 +129,7 @@ func TestPanic(t *testing.T) {
 }
 
 func TestTimeout(t *testing.T) {
-	fns := []func() (interface{}, error){
+	fns := []Executor{
 		func() (interface{}, error) {
 			time.Sleep(1000 * time.Millisecond)
 			return 1, nil
@@ -152,7 +152,7 @@ func TestTimeout(t *testing.T) {
 }
 
 func TestEmptyFns(t *testing.T) {
-	fns := []func() (interface{}, error){}
+	fns := []Executor{}
 	results, err := New(1000).AllSettled(fns).Await()
 
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 )
 
 // 1. define a list of functions
-fns := []func() (interface{}, error){
+fns := []gromise.Executor{
     func() (interface{}, error) {
         // business logic that may cause lots of time
         return data, nil
