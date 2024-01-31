@@ -214,6 +214,8 @@ func BenchmarkNewGromise(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		New(1000).AllSettled(fns).Await()
+		if _, err := New(1000).AllSettled(fns).Await(); err != nil {
+			b.Errorf("err should be nil, got %v", err)
+		}
 	}
 }
