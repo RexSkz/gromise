@@ -32,7 +32,7 @@ func (g *Gromise) AllSettled(fns []Executor) *AllSettledResult {
 
 	go func() {
 		if len(fns) == 0 {
-			result.finished <- true
+			result.finishedCh <- true
 			return
 		}
 
@@ -64,22 +64,33 @@ func (g *Gromise) AllSettled(fns []Executor) *AllSettledResult {
 				}()
 
 				if r, err := fn(); err != nil {
-					result.values[index].Status = StatusRejected
-					result.values[index].Reason = err
+					if !result.timeout {
+						result.values[index].Status = StatusRejected
+						result.values[index].Reason = err
+					}
 				} else {
-					result.values[index].Status = StatusFulfilled
-					result.values[index].Value = r
+					if !result.timeout {
+						result.values[index].Status = StatusFulfilled
+						result.values[index].Value = r
+					}
 				}
 			}(fn, index)
 		}
 
 		for {
 			if goroutinesToWait <= 0 {
-				result.finished <- true
+				result.finishedCh <- true
 				break
 			}
 			if time.Since(now).Milliseconds() > int64(g.timeoutMs) {
-				result.timeout <- true
+				result.timeoutCh <- true
+				result.timeout = true
+				for index := range result.values {
+					if result.values[index].Status == StatusPending {
+						result.values[index].Status = StatusRejected
+						result.values[index].Reason = ErrorTimeout
+					}
+				}
 				break
 			}
 		}

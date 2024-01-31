@@ -134,21 +134,26 @@ func TestTimeout(t *testing.T) {
 			time.Sleep(1000 * time.Millisecond)
 			return 1, nil
 		},
+		func() (interface{}, error) {
+			return 2, nil
+		},
 	}
 
-	prev := time.Now()
-	_, err := New(100).AllSettled(fns).Await()
-	after := time.Now()
-
+	result, err := New(100).AllSettled(fns).Await()
 	if err != ErrorTimeout {
 		t.Errorf("err should be ErrorTimeout, got %v", err)
 	}
 
-	elapsedTime := after.Sub(prev)
-	// 150 ms is 100ms + 50ms epsilon
-	if elapsedTime > 150*time.Millisecond {
-		t.Errorf("fns should be executed concurrently, but used %d ms", elapsedTime.Milliseconds())
-	}
+	assert.Equal(t, result, []*AllSettledValue{
+		{
+			Status: StatusRejected,
+			Reason: ErrorTimeout,
+		},
+		{
+			Status: StatusFulfilled,
+			Value:  2,
+		},
+	})
 }
 
 func TestEmptyFns(t *testing.T) {
@@ -162,4 +167,27 @@ func TestEmptyFns(t *testing.T) {
 	if len(results) != 0 {
 		t.Errorf("the length of results should be 0, got %d", len(results))
 	}
+}
+
+func TestTimeoutNotAffectResult(t *testing.T) {
+	fns := []Executor{
+		func() (interface{}, error) {
+			time.Sleep(1000 * time.Millisecond)
+			return 1, nil
+		},
+	}
+
+	result, _ := New(100).AllSettled(fns).Await()
+
+	// If fn is still running, the result status will be changed to
+	// StatusFulfilled after 1 second, which is not expected.
+	// The expected behaviour should be StatusReject.
+	time.Sleep(1000 * time.Millisecond)
+
+	assert.Equal(t, result, []*AllSettledValue{
+		{
+			Status: StatusRejected,
+			Reason: ErrorTimeout,
+		},
+	})
 }

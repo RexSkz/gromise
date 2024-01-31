@@ -7,25 +7,27 @@ type AllSettledValue struct {
 }
 
 type AllSettledResult struct {
-	finished chan bool
-	timeout  chan bool
-	values   []*AllSettledValue
+	finishedCh chan bool
+	timeoutCh  chan bool
+	timeout    bool
+	values     []*AllSettledValue
 }
 
 func newAllSettledResult() *AllSettledResult {
 	result := &AllSettledResult{
-		finished: make(chan bool),
-		timeout:  make(chan bool),
-		values:   []*AllSettledValue{},
+		finishedCh: make(chan bool, 1),
+		timeoutCh:  make(chan bool, 1),
+		timeout:    false,
+		values:     []*AllSettledValue{},
 	}
 	return result
 }
 
 func (r *AllSettledResult) Await() ([]*AllSettledValue, error) {
 	select {
-	case <-r.finished:
+	case <-r.finishedCh:
 		return r.values, nil
-	case <-r.timeout:
+	case <-r.timeoutCh:
 		return r.values, ErrorTimeout
 	}
 }
