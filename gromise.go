@@ -46,8 +46,8 @@ func (g *Gromise) AllSettled(fns []Executor) *AllSettledResult {
 			}
 		}
 
-		for index, fn := range fns {
-			go func(fn func() (interface{}, error), index int) {
+		for index, itemFn := range fns {
+			go func(itemFn func() (interface{}, error), index int) {
 				defer func() {
 					goroutinesToWait--
 					if r := recover(); r != nil {
@@ -63,7 +63,7 @@ func (g *Gromise) AllSettled(fns []Executor) *AllSettledResult {
 					}
 				}()
 
-				if r, err := fn(); err != nil {
+				if itemResult, err := itemFn(); err != nil {
 					if !result.timeout {
 						result.values[index].Status = StatusRejected
 						result.values[index].Reason = err
@@ -71,10 +71,10 @@ func (g *Gromise) AllSettled(fns []Executor) *AllSettledResult {
 				} else {
 					if !result.timeout {
 						result.values[index].Status = StatusFulfilled
-						result.values[index].Value = r
+						result.values[index].Value = itemResult
 					}
 				}
-			}(fn, index)
+			}(itemFn, index)
 		}
 
 		for {

@@ -1,0 +1,58 @@
+linters:
+  disable-all: true
+  enable:
+    # enabled by default, keep going
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    # disabled by default, enable here
+    - asasalint
+    - bidichk
+    - bodyclose
+    - containedctx
+    - contextcheck
+    - dogsled
+    - durationcheck
+    - errchkjson
+    # - errname
+    - exhaustive
+    - exportloopref
+    - forcetypeassert
+    - gci
+    - gochecknoinits
+    - goconst
+    - gocritic
+    # - goerr113
+    - gomnd
+    - gosec
+    - govet
+    - makezero
+    - misspell
+    - musttag
+    - nilerr
+    - nilnil
+    - nolintlint
+    - nonamedreturns
+    - perfsprint
+    - prealloc
+    - protogetter
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - varnamelen
+    - wastedassign
+    - wrapcheck
+
+linters-settings:
+  gci:
+    sections:
+        - standard
+        - blank
+        - prefix(git.garena.com)
+        - blank
+        - default
+    skip-generated: false
+    custom-order: true
