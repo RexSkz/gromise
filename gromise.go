@@ -1,6 +1,7 @@
 package gromise
 
 import (
+	"context"
 	"errors"
 	"time"
 )
@@ -36,9 +37,6 @@ func (g *Gromise) AllSettled(fns []Executor) *AllSettledResult {
 			return
 		}
 
-		goroutinesToWait := len(fns)
-		now := time.Now()
-
 		result.values = make([]*AllSettledValue, len(fns))
 		for index := range result.values {
 			result.values[index] = &AllSettledValue{
@@ -46,6 +44,7 @@ func (g *Gromise) AllSettled(fns []Executor) *AllSettledResult {
 			}
 		}
 
+		goroutinesToWait := len(fns)
 		for index, itemFn := range fns {
 			go func(itemFn func() (interface{}, error), index int) {
 				defer func() {
@@ -77,21 +76,26 @@ func (g *Gromise) AllSettled(fns []Executor) *AllSettledResult {
 			}(itemFn, index)
 		}
 
+		ctxWithTimeout, clearTimeout := context.WithTimeout(context.Background(), time.Duration(g.timeoutMs)*time.Millisecond)
 		for {
-			if goroutinesToWait <= 0 {
-				result.finishedCh <- true
-				break
-			}
-			if time.Since(now).Milliseconds() > int64(g.timeoutMs) {
+			select {
+			case <-ctxWithTimeout.Done():
 				result.timeoutCh <- true
 				result.timeout = true
+				clearTimeout()
 				for index := range result.values {
 					if result.values[index].Status == StatusPending {
 						result.values[index].Status = StatusRejected
 						result.values[index].Reason = ErrorTimeout
 					}
 				}
-				break
+				return
+			default:
+				if goroutinesToWait <= 0 {
+					result.finishedCh <- true
+					clearTimeout()
+					return
+				}
 			}
 		}
 	}()

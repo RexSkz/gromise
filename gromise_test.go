@@ -5,8 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/goleak"
 	"gopkg.in/go-playground/assert.v1"
 )
+
+func TestMain(m *testing.M) {
+	goleak.VerifyTestMain(m)
+}
 
 func TestNewGromise(t *testing.T) {
 	fns := []Executor{
@@ -190,4 +195,25 @@ func TestTimeoutNotAffectResult(t *testing.T) {
 			Reason: ErrorTimeout,
 		},
 	})
+}
+
+func BenchmarkNewGromise(b *testing.B) {
+	fns := []Executor{
+		func() (interface{}, error) {
+			time.Sleep(100 * time.Millisecond)
+			return 1, nil
+		},
+		func() (interface{}, error) {
+			time.Sleep(200 * time.Millisecond)
+			return 2, nil
+		},
+		func() (interface{}, error) {
+			time.Sleep(300 * time.Millisecond)
+			return 3, nil
+		},
+	}
+
+	for i := 0; i < b.N; i++ {
+		New(1000).AllSettled(fns).Await()
+	}
 }

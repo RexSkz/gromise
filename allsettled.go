@@ -23,6 +23,10 @@ func newAllSettledResult() *AllSettledResult {
 	return result
 }
 
+// Run all the functions in parallel and wait for all of them to finish.
+// Notice that gromise can't terminate the goroutines since it's the Golang's
+// limitation, so if there are any goroutines that are still running after
+// the timeout, they will be left running, which may cause goroutine leak.
 func (r *AllSettledResult) Await() ([]*AllSettledValue, error) {
 	select {
 	case <-r.finishedCh:
